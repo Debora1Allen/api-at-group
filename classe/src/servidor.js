@@ -1,17 +1,14 @@
 const express = require('express');
 const usuarios = require('./controladores/usuarios');
-const login = require('./controladores/login');
-const verifica = require('./verificaLogin');
-const usuario = require('./controladores/usuarios');
 
-const app = express();
+const rotas = express();
 
-app.use(express.json());
+rotas.post('/cadastro', usuarios.cadastrar);
+rotas.post('/login', usuarios.login);
 
-app.post('/usuario', usuarios.cadastrarUsuario);
-app.post('/login',login.login);
-app.use(verifica);
-app.get('/usuario', usuario.detalharUsuario);
-app.put('/usuario', usuario.atulizarUsuario);
+rotas.use(verificaToken);
 
-module.exports = app;
+rotas.get('/detalhar', usuarios.detalhar);
+rotas.put('/atualizar', usuarios.atualizar);
+
+module.exports = rotas;
