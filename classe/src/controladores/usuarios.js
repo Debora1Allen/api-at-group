@@ -2,8 +2,7 @@ const knex = require('../conexao');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const usuarioSchema = require('../schemas/schemaUsuario');
-const loginSchema = require('../validacoes/loginSchema');
-const atualizarUsuarioSchema = require('../validacoes/atualizarUsuarioSchema');
+const loginSchema = require('../schemas/loginSchema');
 
 const cadastrar = async (req, res) => {
 
@@ -69,11 +68,11 @@ const login = async (req, res) => {
 }
 
 const atualizar = async (req, res) => {
-  const { nome, email, senha, cpf, telefone } = req.body;
+  const { nome, email, senha} = req.body;
   const { id } = req.usuario;
 
   try {
-    await atualizarUsuarioSchema.validate(req.body);
+    await usuarioSchema.validate(req.body);
     const usuario = await knex('usuarios').where({ email }).first();
 
     if (usuario && usuario.email === email && usuario.id !== id) {
@@ -82,9 +81,7 @@ const atualizar = async (req, res) => {
 
     let body = {
       nome,
-      email,
-      cpf,
-      telefone
+      email
     };
 
     if (senha) {

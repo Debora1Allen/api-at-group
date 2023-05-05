@@ -1,14 +1,14 @@
 const express = require('express');
-const usuarios = require('./controladores/usuarios');
+const usuarios = require('./controladores');
 
-const rotas = express();
+const servidor = express();
 
-rotas.post('/cadastro', usuarios.cadastrar);
-rotas.post('/login', usuarios.login);
+servidor.post('/cadastro', usuarios.cadastrar);
+servidor.post('/login', usuarios.login);
 
-rotas.use(verificaToken);
+servidor.use(verificaToken);
 
-rotas.get('/detalhar', usuarios.detalhar);
-rotas.put('/atualizar', usuarios.atualizar);
+servidor.get('/detalhar', usuarios.detalhar);
+servidor.put('/atualizar', usuarios.atualizar);
 
-module.exports = rotas;
+module.exports = servidor;
