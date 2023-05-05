@@ -23,15 +23,19 @@ Utilize o Postman (https://www.postman.com/) ou Insomnia(https://insomnia.rest/d
 ### Estrutura de Pasta
 
     ├── api-processo-seletivo
-    |   ├── node_modules (não será importado, rodar npm install)
+    |   ├── node_modules (rodar npm install)
     |   ├── src
-    |       ├── index.js
-    |       ├── servidor.js
-    |       ├── conexao.js
     |       ├── controladores
     |           ├── usuarios.js
+    |       ├── schemas
+    |           ├── config.js
+    |           ├── loginShema.js
+    |           ├── schemaUsuarios.js
+    |       ├── conexao.js
+    |       ├── index.js
+    |       ├── servidor.js
     |   ├── tables.sql
-    |   ├── .env(não importado, personalizavél)
+    |   ├── .env.example
     |   ├── package-lock.json
     |   ├── package.json
     |   ├── README.md
