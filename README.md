@@ -58,6 +58,10 @@ Utilize o Postman (https://www.postman.com/) ou Insomnia(https://insomnia.rest/d
     http://localhost:8000/atualizar
 #### Method: POST 
 
+### URL: 
+    http://localhost:8000/deletar
+#### Method: PUT 
+
 ### License
 
 [MIT](https://github.com/Debora1Allen)©[2023 debora1allen](https://github.com/Debora1Allen)
