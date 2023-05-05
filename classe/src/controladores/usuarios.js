@@ -6,7 +6,7 @@ const loginSchema = require('../schemas/loginSchema');
 
 const cadastrar = async (req, res) => {
 
-  const { nome, email, senha } = req.body;
+  const { nome, email, senha, deleted = false} = req.body;
   try {
     await usuarioSchema.validate(req.body);
     const emailCadastrado = await knex('usuarios').where({ email: email }).first();
@@ -17,7 +17,7 @@ const cadastrar = async (req, res) => {
 
     const senhaCriptografada = await bcrypt.hash(senha, 10);
 
-    await knex('usuarios').insert({ nome, email, senha: senhaCriptografada });
+    await knex('usuarios').insert({ nome, email, senha: senhaCriptografada, deleted:false});
 
     return res.status(201).json('Cadastro realizado com sucesso');
 
@@ -102,6 +102,28 @@ const atualizar = async (req, res) => {
   } catch (error) {
     return res.status(400).json(error.message)
   }
+
+  const deleteUsuario = async (req, res) => {
+    const { id } = req.params;
+  
+    try {
+      const usuario = await knex('usuario')
+        .where({ id })
+        .first();
+  
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuario não encontrado' });
+      }
+  
+      await knex('usuario')
+        .where({ id })
+        .update({ deleted: true });
+  
+      return res.status(200).json({ message: 'Usuario marcado como excluido' });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 
@@ -109,5 +131,6 @@ module.exports = {
   cadastrar,
   login,
   detalhar,
-  atualizar
+  atualizar,
+  deleteUsuario
 }

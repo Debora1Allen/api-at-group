@@ -10,5 +10,6 @@ servidor.use(verificaToken);
 
 servidor.get('/detalhar', usuarios.detalhar);
 servidor.put('/atualizar', usuarios.atualizar);
+servidor.put('/deletar', usuarios.deletar);
 
 module.exports = servidor;
