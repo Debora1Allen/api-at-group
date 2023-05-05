@@ -1,31 +1,37 @@
-const conexao = require('./conexao');
-const segredo = require('./segredos');
+const knex = require('../conexao');
 const jwt = require('jsonwebtoken');
 
 
-const verifica = async(req,res,next) =>{
-    const {authorization} = req.headers;
+const verificaLogin = async (req, res, next) => {
+  const { authorization } = req.headers;
 
-    if(!authorization){
-        return res.status(401).json({mensagem: "autenticação necessaria"});
-    }
- try{
+  if (!authorization) {
+    return res.status(400).json('Token não informado');
+  }
+
+  try {
+
     const token = authorization.replace('Bearer', '').trim();
-   
-     const {id} = jwt.verify(token,segredo);
-     const query = 'select * from usuarios where id = $1';
-     const {rows, rowCount} = await conexao.query(query,[id]);
-     if(rowCount === 0){
-         return res.status(404).json({mensagem: 'Usuario não encontrado'});
-     }
-     const {senha, ...usuario} = rows[0];
 
-     req.usuario = usuario;
-     next();
- }catch (error){    
-     return res.status(400).json(error.message);
-     
- }
+    const usuario = jwt.verify(token, process.env.SEGREDO);
+
+    const usuarioEncontrado = await knex('usuarios').where({ id: usuario.id }).first();
+
+    if (!usuarioEncontrado) {
+      return res.status(400).json('O usuário não existe.');
+    }
+
+    req.usuario = {
+      id: usuarioEncontrado.id,
+      nome: usuarioEncontrado.nome,
+      email: usuarioEncontrado.email
+    }
+
+    next();
+
+  } catch (error) {
+    return res.status(400).json(error.message);
+  }
 }
 
-module.exports = verifica;
+module.exports = verificaLogin;

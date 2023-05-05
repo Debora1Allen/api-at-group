@@ -1,67 +1,116 @@
-const conexao = require('../conexao');
+const knex = require('../conexao');
 const bcrypt = require('bcrypt');
-const schemaUsuario = require('../schemas/schemaUsuario');
+const jwt = require('jsonwebtoken');
+const usuarioSchema = require('../schemas/schemaUsuario');
+const loginSchema = require('../validacoes/loginSchema');
+const atualizarUsuarioSchema = require('../validacoes/atualizarUsuarioSchema');
 
+const cadastrar = async (req, res) => {
 
-const cadastrarUsuario = async (req, res) => {
-    const { nome, email, senha } = req.body;
+  const { nome, email, senha } = req.body;
+  try {
+    await usuarioSchema.validate(req.body);
+    const emailCadastrado = await knex('usuarios').where({ email: email }).first();
 
-    try {
-        await schemaUsuario.validate(req.body);
-        const queryEmail = 'select * from usuarios where email = $1';
-        const { rowCount: usuariosCount } = await conexao.query(queryEmail, [email]);
-        if (usuariosCount > 0) {
-            return res.status(400).json({
-                mensagem: "Já existe usuário cadastrado com o e-mail informado."
-            });
-        }
-        const cripto = await bcrypt.hash(senha, 10);
-
-        const query = 'insert into usuarios (nome,nome_loja,email,senha) values($1,$2,$3,$4)';
-
-        const registerUser = await conexao.query(query, [nome, nome_loja, email, cripto]);
-
-        if (registerUser.rowCount === 0) {
-            return res.status(400).json('Não foi possível cadastrar usuario');
-        };
-        return res.status(200).json();
-
-
-    } catch (error) {
-        return res.status(400).json(error.message);
+    if (emailCadastrado) {
+      return res.status(400).json('O email fornecido já existe.');
     }
+
+    const senhaCriptografada = await bcrypt.hash(senha, 10);
+
+    await knex('usuarios').insert({ nome, email, senha: senhaCriptografada });
+
+    return res.status(201).json('Cadastro realizado com sucesso');
+
+  } catch (error) {
+    return res.status(400).json(error.message);
+  }
+
 }
 
-const detalharUsuario = async (req, res) => {
-    const { usuario: usuarioReq } = req;
+const detalhar = async (req, res) => {
+  const usuario = req.usuario;
 
-    try {
-        const usuario = await conexao.query('select * from usuarios where id = $1', [usuarioReq.id]);
-        delete usuario.rows[0].senha;
-        return res.status(200).json(usuario.rows);
-    } catch (error) {
-        return res.status(400).json(error.message);
-    }
+  try {
+    const detalhar = await knex('usuarios').where({ id: usuario.id }).first();
+    const { senha, ...resto } = detalhar
+    return res.status(200).json(resto)
+
+
+  } catch (error) {
+    return res.status(401).json({ mensagem: error.message })
+
+  }
 }
 
-const atulizarUsuario = async (req, res) => {
-    const { usuario: usuarioReq } = req;
-    const { nome, email, senha } = req.body;
+const login = async (req, res) => {
+  const { email, senha } = req.body;
+  try {
+    await loginSchema.validate(req.body);
+    const usuario = await knex('usuarios').where('email', email).first();
 
-    try {
-
-        const usuarioAtualizado = await conexao.query('update usuarios set nome = $1, nome_loja=$2,email=$3,senha =$4 where id =$5', [nome, nome_loja, email, senha, usuarioReq.id]);
-
-        if (usuarioAtualizado.rowCount === 0) {
-            return res.status(404).json({ mensagem: 'Não foi possivel atualização de usuario' })
-        }
-
-        return res.status(200).json();
-    } catch (error) {
-        return res.status(400).json(error.message);
+    if (!usuario) {
+      return res.status(400).json('O email fornecido não existe.');
     }
+
+    const verificarSenha = await bcrypt.compare(senha, usuario.senha);
+
+    if (!verificarSenha) {
+      return res.status(400).json('Senha incorreta');
+    }
+
+    const token = jwt.sign({ id: usuario.id }, process.env.SEGREDO, { expiresIn: '12h' });
+
+    return res.status(201).json(token);
+
+  } catch (error) {
+    return res.status(400).json(error.message);
+  }
+}
+
+const atualizar = async (req, res) => {
+  const { nome, email, senha, cpf, telefone } = req.body;
+  const { id } = req.usuario;
+
+  try {
+    await atualizarUsuarioSchema.validate(req.body);
+    const usuario = await knex('usuarios').where({ email }).first();
+
+    if (usuario && usuario.email === email && usuario.id !== id) {
+      return res.status(400).json('O e-mail informado já está sendo utilizado por outro usuário.')
+    };
+
+    let body = {
+      nome,
+      email,
+      cpf,
+      telefone
+    };
+
+    if (senha) {
+      const senhaCripto = await bcrypt.hash(senha, 10);
+      body = { ...body, senha: senhaCripto }
+    }
+
+    const usuarioAtualizado = await knex('usuarios')
+      .where({ id })
+      .update(body);
+
+    if (!usuarioAtualizado) {
+      return res.status(400).json("Não foi possível atualizar o usuário");
+    }
+
+    return res.status(200).json();
+
+  } catch (error) {
+    return res.status(400).json(error.message)
+  }
 }
 
 
-module.exports = { cadastrarUsuario, detalharUsuario, atulizarUsuario };
-
+module.exports = {
+  cadastrar,
+  login,
+  detalhar,
+  atualizar
+}
