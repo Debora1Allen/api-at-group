@@ -14,7 +14,7 @@
 2. Instale as dependências do projeto com `npm install`;
 3. Rode o servidor de desenvolvimento com `npm run dev`.
 4. Utilizando o arquivo `/.env.example` como parâmetro, edite suas configurações de conexao com banco de dados PostgresSQL
-5. Dumping do banco de dados disponivél no arquivo `/.database.sql`
+5. Dumping do banco de dados disponivél no arquivo `/.tables.sql`
 
 ### Sugestão
 
